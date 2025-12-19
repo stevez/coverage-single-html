@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3] - 2024-12-19
+
+### Fixed
+
+- Fixed click handler to recognize `#` anchor links in addition to `.html` links
+- Links rewritten by `rewriteInternalLinks()` now properly navigate when clicked
+
 ## [0.1.2] - 2024-12-19
 
 ### Fixed

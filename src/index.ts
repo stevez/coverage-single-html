@@ -397,7 +397,19 @@ var pathToId = ${JSON.stringify(pathToIdMap)};
     const link = e.target.closest('a');
     if (link) {
       const href = link.getAttribute('href');
-      if (href && href.endsWith('.html') && !href.startsWith('http')) {
+      if (!href) return;
+
+      // Handle # anchor links (already rewritten)
+      if (href.startsWith('#')) {
+        e.preventDefault();
+        const pageId = href.slice(1);
+        showPage(pageId);
+        history.pushState({ pageId }, '', '#' + pageId);
+        return;
+      }
+
+      // Handle .html links (fallback for any not rewritten)
+      if (href.endsWith('.html') && !href.startsWith('http')) {
         e.preventDefault();
 
         // Resolve relative path
