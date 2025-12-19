@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2] - 2024-12-19
+
+### Fixed
+
+- Fixed internal navigation links in bundled HTML to use `#` anchors instead of external URLs
+- Links now correctly navigate within the single-page application instead of trying to load separate files
+- Added `rewriteInternalLinks()` to pre-process HTML content and convert relative paths to anchor links
+
 ## [0.1.1] - 2024-12-19
 
 ### Fixed

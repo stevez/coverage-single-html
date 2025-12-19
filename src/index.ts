@@ -70,6 +70,65 @@ function extractBodyContent(html: string): string {
   return match ? match[1] : html
 }
 
+function rewriteInternalLinks(
+  html: string,
+  currentPath: string,
+  pathToIdMap: Record<string, string>
+): string {
+  // Rewrite href attributes that point to .html files to use # anchors
+  return html.replace(/href="([^"]+\.html)"/g, (match, href) => {
+    // Skip external URLs
+    if (href.startsWith('http://') || href.startsWith('https://')) {
+      return match
+    }
+
+    // Resolve relative path
+    const resolvedPath = resolveRelativePath(href, currentPath)
+    const pageId = pathToIdMap[resolvedPath]
+
+    if (pageId) {
+      return `href="#${pageId}"`
+    }
+
+    // If not found, keep original (will be handled by JS as fallback)
+    return match
+  })
+}
+
+function resolveRelativePath(href: string, basePath: string): string {
+  // Get directory of current file
+  const baseDir = basePath.includes('/')
+    ? basePath.substring(0, basePath.lastIndexOf('/'))
+    : ''
+
+  let resolved = href
+
+  if (href.startsWith('./')) {
+    resolved = baseDir ? baseDir + '/' + href.substring(2) : href.substring(2)
+  } else if (href.startsWith('../')) {
+    const parts = baseDir.split('/')
+    const hrefParts = href.split('/')
+
+    for (const part of hrefParts) {
+      if (part === '..') {
+        parts.pop()
+      } else if (part !== '.') {
+        parts.push(part)
+      }
+    }
+    resolved = parts.join('/')
+  } else if (!href.startsWith('/') && !href.includes('://')) {
+    // Relative path without ./ or ../
+    resolved = baseDir ? baseDir + '/' + href : href
+  }
+
+  // Normalize path
+  resolved = resolved.replace(/\\/g, '/').replace(/\/+/g, '/')
+  if (resolved.startsWith('/')) resolved = resolved.substring(1)
+
+  return resolved
+}
+
 function sanitizeId(path: string): string {
   return path.replace(/[^a-zA-Z0-9]/g, '_')
 }
@@ -100,19 +159,23 @@ export function bundleCoverage(options: BundleOptions): BundleResult {
   const favicon = readBinaryAsset(inputDir, 'favicon.png')
   const sortArrow = readBinaryAsset(inputDir, 'sort-arrow-sprite.png')
 
-  // Build page data for navigation
-  const pages = htmlFiles.map((file) => ({
-    id: sanitizeId(file.path),
-    path: file.path,
-    title: extractTitle(file.content),
-    body: extractBodyContent(file.content),
-  }))
-
-  // Build path-to-id lookup map for JavaScript
+  // Build path-to-id lookup map first (needed for link rewriting)
   const pathToIdMap: Record<string, string> = {}
-  for (const page of pages) {
-    pathToIdMap[page.path] = page.id
+  for (const file of htmlFiles) {
+    pathToIdMap[file.path] = sanitizeId(file.path)
   }
+
+  // Build page data for navigation, rewriting internal links
+  const pages = htmlFiles.map((file) => {
+    const body = extractBodyContent(file.content)
+    const rewrittenBody = rewriteInternalLinks(body, file.path, pathToIdMap)
+    return {
+      id: sanitizeId(file.path),
+      path: file.path,
+      title: extractTitle(file.content),
+      body: rewrittenBody,
+    }
+  })
 
   // Build navigation structure
   const fileTree = buildFileTree(htmlFiles.map((f) => f.path))
