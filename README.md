@@ -84,7 +84,7 @@ Works with any tool that generates Istanbul-style HTML reports:
 
 ## Demo
 
-[View a sample coverage report](test-report.html) generated from a real project (62 files bundled into a single 662KB HTML file).
+[View a sample coverage report](https://stevez.github.io/coverage-single-html/test-report.html) generated from a real project (62 files bundled into a single 662KB HTML file).
 
 ## Example
 
