@@ -1,0 +1,49 @@
+{
+  "name": "coverage-single-html",
+  "version": "0.1.0",
+  "description": "Convert Istanbul/Vitest coverage HTML reports into a single self-contained HTML file",
+  "author": "Steve Zhang",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "coverage-single-html": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "coverage",
+    "istanbul",
+    "vitest",
+    "jest",
+    "html",
+    "single-page",
+    "report",
+    "v8"
+  ],
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stevez/coverage-single-html.git"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
