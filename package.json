@@ -1,6 +1,6 @@
 {
   "name": "coverage-single-html",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Convert Istanbul/Vitest coverage HTML reports into a single self-contained HTML file",
   "author": "Steve Zhang",
   "license": "MIT",
@@ -13,8 +13,8 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "files": [

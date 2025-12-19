@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.1] - 2024-12-19
+
+### Fixed
+
+- Fixed package exports to use `default` instead of `import` for better compatibility with bundlers and Playwright
+
 ## [0.1.0] - 2024-12-18
 
 ### Added
