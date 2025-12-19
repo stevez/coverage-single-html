@@ -306,130 +306,121 @@ var pathToId = ${JSON.stringify(pathToIdMap)};
 
 // Single-page navigation
 (function() {
-  const links = document.querySelectorAll('.spa-sidebar a[data-page]');
-  const pages = document.querySelectorAll('.spa-page');
-  const folders = document.querySelectorAll('.spa-sidebar .folder');
-  let currentPath = 'index.html';
+  function init() {
+    const links = document.querySelectorAll('.spa-sidebar a[data-page]');
+    const pages = document.querySelectorAll('.spa-page');
+    const folders = document.querySelectorAll('.spa-sidebar .folder');
+    let currentPath = 'index.html';
 
-  function showPage(pageId) {
-    pages.forEach(p => p.classList.remove('active'));
-    links.forEach(l => l.classList.remove('active'));
+    function showPage(pageId) {
+      pages.forEach(p => p.classList.remove('active'));
+      links.forEach(l => l.classList.remove('active'));
 
-    const page = document.getElementById('page_' + pageId);
-    if (page) {
-      page.classList.add('active');
-      const link = document.querySelector('a[data-page="' + pageId + '"]');
-      if (link) link.classList.add('active');
+      const page = document.getElementById('page_' + pageId);
+      if (page) {
+        page.classList.add('active');
+        const link = document.querySelector('a[data-page="' + pageId + '"]');
+        if (link) link.classList.add('active');
 
-      // Update currentPath for relative link resolution
-      for (const [path, id] of Object.entries(pathToId)) {
-        if (id === pageId) {
-          currentPath = path;
-          break;
+        // Update currentPath for relative link resolution
+        for (const [path, id] of Object.entries(pathToId)) {
+          if (id === pageId) {
+            currentPath = path;
+            break;
+          }
         }
       }
     }
-  }
 
-  // Resolve relative paths like "../foo.html" or "./bar.html"
-  function resolvePath(href, basePath) {
-    // Get directory of current file
-    const baseDir = basePath.includes('/') ? basePath.substring(0, basePath.lastIndexOf('/')) : '';
+    // Resolve relative paths like "../foo.html" or "./bar.html"
+    function resolvePath(href, basePath) {
+      const baseDir = basePath.includes('/') ? basePath.substring(0, basePath.lastIndexOf('/')) : '';
+      let resolved = href;
 
-    // Handle different relative path formats
-    let resolved = href;
-
-    if (href.startsWith('./')) {
-      resolved = baseDir ? baseDir + '/' + href.substring(2) : href.substring(2);
-    } else if (href.startsWith('../')) {
-      let parts = baseDir.split('/');
-      let hrefParts = href.split('/');
-
-      for (const part of hrefParts) {
-        if (part === '..') {
-          parts.pop();
-        } else if (part !== '.') {
-          parts.push(part);
+      if (href.startsWith('./')) {
+        resolved = baseDir ? baseDir + '/' + href.substring(2) : href.substring(2);
+      } else if (href.startsWith('../')) {
+        let parts = baseDir.split('/');
+        let hrefParts = href.split('/');
+        for (const part of hrefParts) {
+          if (part === '..') {
+            parts.pop();
+          } else if (part !== '.') {
+            parts.push(part);
+          }
         }
+        resolved = parts.join('/');
+      } else if (!href.startsWith('/') && !href.includes('://')) {
+        resolved = baseDir ? baseDir + '/' + href : href;
       }
-      resolved = parts.join('/');
-    } else if (!href.startsWith('/') && !href.includes('://')) {
-      // Relative path without ./ or ../
-      resolved = baseDir ? baseDir + '/' + href : href;
+
+      resolved = resolved.replace(/\\\\/g, '/').replace(/\\/+/g, '/');
+      if (resolved.startsWith('/')) resolved = resolved.substring(1);
+      return resolved;
     }
 
-    // Normalize path (remove duplicate slashes, etc.)
-    resolved = resolved.replace(/\\\\/g, '/').replace(/\\/+/g, '/');
-    if (resolved.startsWith('/')) resolved = resolved.substring(1);
-
-    return resolved;
-  }
-
-  links.forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const pageId = link.getAttribute('data-page');
-      showPage(pageId);
-      history.pushState({ pageId }, '', '#' + pageId);
-    });
-  });
-
-  folders.forEach(folder => {
-    folder.addEventListener('click', () => {
-      folder.classList.toggle('open');
-    });
-  });
-
-  // Handle back/forward
-  window.addEventListener('popstate', (e) => {
-    if (e.state && e.state.pageId) {
-      showPage(e.state.pageId);
-    }
-  });
-
-  // Handle initial hash
-  if (location.hash) {
-    showPage(location.hash.slice(1));
-  }
-
-  // Intercept internal links in content
-  document.querySelector('.spa-content').addEventListener('click', (e) => {
-    const link = e.target.closest('a');
-    if (link) {
-      const href = link.getAttribute('href');
-      if (!href) return;
-
-      // Handle # anchor links (already rewritten)
-      if (href.startsWith('#')) {
+    links.forEach(link => {
+      link.addEventListener('click', (e) => {
         e.preventDefault();
-        const pageId = href.slice(1);
+        const pageId = link.getAttribute('data-page');
         showPage(pageId);
         history.pushState({ pageId }, '', '#' + pageId);
-        return;
+      });
+    });
+
+    folders.forEach(folder => {
+      folder.addEventListener('click', () => {
+        folder.classList.toggle('open');
+      });
+    });
+
+    window.addEventListener('popstate', (e) => {
+      if (e.state && e.state.pageId) {
+        showPage(e.state.pageId);
       }
+    });
 
-      // Handle .html links (fallback for any not rewritten)
-      if (href.endsWith('.html') && !href.startsWith('http')) {
-        e.preventDefault();
+    if (location.hash) {
+      showPage(location.hash.slice(1));
+    }
 
-        // Resolve relative path
-        const resolvedPath = resolvePath(href, currentPath);
+    document.querySelector('.spa-content').addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (link) {
+        const href = link.getAttribute('href');
+        if (!href) return;
 
-        // Look up page ID from resolved path
-        const pageId = pathToId[resolvedPath];
-        if (pageId) {
+        if (href.startsWith('#')) {
+          e.preventDefault();
+          const pageId = href.slice(1);
           showPage(pageId);
           history.pushState({ pageId }, '', '#' + pageId);
-        } else {
-          console.warn('Page not found:', resolvedPath, 'from href:', href, 'base:', currentPath);
+          return;
+        }
+
+        if (href.endsWith('.html') && !href.startsWith('http')) {
+          e.preventDefault();
+          const resolvedPath = resolvePath(href, currentPath);
+          const pageId = pathToId[resolvedPath];
+          if (pageId) {
+            showPage(pageId);
+            history.pushState({ pageId }, '', '#' + pageId);
+          } else {
+            console.warn('Page not found:', resolvedPath, 'from href:', href, 'base:', currentPath);
+          }
         }
       }
-    }
-  });
+    });
 
-  // Run prettify if available
-  if (typeof prettyPrint === 'function') {
-    prettyPrint();
+    if (typeof prettyPrint === 'function') {
+      prettyPrint();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
 })();
   </script>

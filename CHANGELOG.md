@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.4] - 2024-12-19
+
+### Fixed
+
+- Wait for `DOMContentLoaded` before initializing navigation to ensure links work immediately on large HTML files
+
 ## [0.1.3] - 2024-12-19
 
 ### Fixed
